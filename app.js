@@ -30,28 +30,28 @@ const logger = (request, response, next) => {
 };
 
 const authenticate = (request, response, next) => {
-  let jeToken;
+  let jwtToken;
   const aHeader = request.header["authorization"];
   if (aHeader !== undefined) {
-    jeToken = aHeader.split(" ")[1];
+    jwtToken = aHeader.split(" ")[1];
   }
-  if (jeToken === undefined) {
+  if (jwtToken === undefined) {
     response.status(401);
     response.send("Invalid JWT Token");
   } else {
-    jwt.verify(jeToken, "jhjkjjj", async (error, payload) => {
+    jwt.verify(jwtToken, "MY_SECRET_KEY", async (error, payload) => {
       if (error) {
         response.status(401);
         response.send("Invalid JWT Token");
       } else {
-        response.send({ jeToken });
+        response.username = payload.username;
         next();
       }
     });
   }
 };
 
-app.post("/login/", async (request, response) => {
+app.post("/login/", authenticate, async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT *
    FROM 
@@ -66,9 +66,9 @@ app.post("/login/", async (request, response) => {
     const isMatch = await bcrypt.compare(password, dbUser.password);
     if (isMatch === true) {
       const payload = { username: username };
-      const JToken = jwt.sign(payload, "jhjkjjj");
+      const jwtToken = jwt.sign(payload, "MY_SECRET_KEY");
 
-      response.send({ JToken });
+      response.send({ jwtToken });
     } else {
       response.status(400);
       response.send("Invalid password");
@@ -77,7 +77,7 @@ app.post("/login/", async (request, response) => {
 });
 
 //get all states
-app.get("/states/",async (request, response) => {
+app.get("/states/", async (request, response) => {
   const getStates = `
     SELECT
     *
@@ -177,20 +177,17 @@ app.put("/districts/:districtId/", async (request, response) => {
 });
 
 //delete dist based on ID
-app.delete(
-  "/districts/:districtId/",
-  async (request, response) => {
-    const { districtId } = request.params;
-    const delDist = `
+app.delete("/districts/:districtId/", async (request, response) => {
+  const { districtId } = request.params;
+  const delDist = `
   DELETE
   FROM
   district
   WHERE 
   district_id=${districtId};`;
-    await db.run(delDist);
-    response.send("District Removed");
-  }
-);
+  await db.run(delDist);
+  response.send("District Removed");
+});
 
 app.get("/states/:stateId/stats/", async (request, response) => {
   const { stateId } = request.params;
