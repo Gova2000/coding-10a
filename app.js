@@ -51,7 +51,7 @@ const authenticate = (request, response, next) => {
   }
 };
 
-app.post("/login/", authenticate, async (request, response) => {
+app.post("/login/",async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT *
    FROM 
