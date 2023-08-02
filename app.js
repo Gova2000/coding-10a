@@ -60,7 +60,7 @@ app.post("/login/", authenticate, async (request, response) => {
     username = '${username}'`;
   const dbUser = await db.get(selectUserQuery);
   if (username === undefined) {
-    response.status(401);
+    response.status(400);
     response.send("Invalid user");
   } else {
     const isMatch = await bcrypt.compare(password, dbUser.password);
@@ -70,14 +70,14 @@ app.post("/login/", authenticate, async (request, response) => {
 
       response.send({ JToken });
     } else {
-      response.status(401);
+      response.status(400);
       response.send("Invalid password");
     }
   }
 });
 
 //get all states
-app.get("/states/", authenticate, async (request, response) => {
+app.get("/states/",async (request, response) => {
   const getStates = `
     SELECT
     *
