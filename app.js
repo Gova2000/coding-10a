@@ -179,7 +179,6 @@ app.put("/districts/:districtId/", async (request, response) => {
 //delete dist based on ID
 app.delete(
   "/districts/:districtId/",
-  authenticate,
   async (request, response) => {
     const { districtId } = request.params;
     const delDist = `
