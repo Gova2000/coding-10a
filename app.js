@@ -31,7 +31,7 @@ const logger = (request, response, next) => {
 
 const authenticate = (request, response, next) => {
   let jwtToken;
-  const aHeader = request.header["authorization"];
+  const aHeader = request.headers["authorization"];
   if (aHeader !== undefined) {
     jwtToken = aHeader.split(" ")[1];
   }
@@ -51,7 +51,7 @@ const authenticate = (request, response, next) => {
   }
 };
 
-app.post("/login/",async (request, response) => {
+app.post("/login/", async (request, response) => {
   const { username, password } = request.body;
   const selectUserQuery = `SELECT *
    FROM 
@@ -59,7 +59,7 @@ app.post("/login/",async (request, response) => {
     WHERE 
     username = '${username}'`;
   const dbUser = await db.get(selectUserQuery);
-  if (username === undefined) {
+  if (dbUser === undefined) {
     response.status(400);
     response.send("Invalid user");
   } else {
@@ -77,7 +77,7 @@ app.post("/login/",async (request, response) => {
 });
 
 //get all states
-app.get("/states/", async (request, response) => {
+app.get("/states/", authenticate, async (request, response) => {
   const getStates = `
     SELECT
     *
@@ -95,7 +95,7 @@ const Convert = (obj) => {
     population: obj.population,
   };
 };
-app.get("/states/:stateId/", async (request, response) => {
+app.get("/states/:stateId/", authenticate, async (request, response) => {
   const { stateId } = request.params;
   const getState = `
     SELECT
@@ -109,7 +109,7 @@ app.get("/states/:stateId/", async (request, response) => {
 });
 
 //create a district in dist table
-app.post("/districts/", async (request, response) => {
+app.post("/districts/", authenticate, async (request, response) => {
   const req = request.body;
   const { districtName, stateId, cases, cured, active, deaths } = req;
   const CreateDist = `
@@ -141,7 +141,7 @@ const Con = (obj) => {
   };
 };
 
-app.get("/districts/:districtId/", async (request, response) => {
+app.get("/districts/:districtId/", authenticate, async (request, response) => {
   const { districtId } = request.params;
   const getDist = `
     SELECT
@@ -155,7 +155,7 @@ app.get("/districts/:districtId/", async (request, response) => {
 });
 
 //updates dist details based on ID
-app.put("/districts/:districtId/", async (request, response) => {
+app.put("/districts/:districtId/", authenticate, async (request, response) => {
   const { districtId } = request.params;
   const req = request.body;
   const { districtName, stateId, cases, cured, active, deaths } = req;
@@ -177,19 +177,23 @@ app.put("/districts/:districtId/", async (request, response) => {
 });
 
 //delete dist based on ID
-app.delete("/districts/:districtId/", async (request, response) => {
-  const { districtId } = request.params;
-  const delDist = `
+app.delete(
+  "/districts/:districtId/",
+  authenticate,
+  async (request, response) => {
+    const { districtId } = request.params;
+    const delDist = `
   DELETE
   FROM
   district
   WHERE 
   district_id=${districtId};`;
-  await db.run(delDist);
-  response.send("District Removed");
-});
+    await db.run(delDist);
+    response.send("District Removed");
+  }
+);
 
-app.get("/states/:stateId/stats/", async (request, response) => {
+app.get("/states/:stateId/stats/", authenticate, async (request, response) => {
   const { stateId } = request.params;
   const stateDETails = `
     SELECT 
